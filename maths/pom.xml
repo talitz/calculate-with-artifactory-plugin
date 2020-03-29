@@ -13,7 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.distribution.url>http://127.0.0.1:8081/artifactory/libs-release</project.distribution.url>
+    <project.distribution.url>https://tal.jfrog.io/artifactory/libs-release</project.distribution.url>
   </properties>
   
   <distributionManagement>
