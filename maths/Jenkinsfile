@@ -20,7 +20,7 @@ pipeline {
             steps {
                 rtServer (
                     id: "ARTIFACTORY_SERVER",
-                    url: "http://localhost:8082/artifactory",
+                    url: "http://127.0.0.1:8082/artifactory",
 		            credentialsId: 'admin.jfrog'
                 )
 
@@ -45,7 +45,7 @@ pipeline {
                 rtMavenRun (
                     tool: "Maven 3.3.9", 
                     pom: 'maths/pom.xml',
-                    goals: 'clean install -Dmaven.test.skip=true',
+                    goals: 'clean install -Dmaven.test.skip=true -s ${SETTINGS_SECRET_FILE}',
                     deployerId: "MAVEN_DEPLOYER",
                     resolverId: "MAVEN_RESOLVER"
                 )
