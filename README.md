@@ -1,4 +1,4 @@
-# Calculate - Experiments with GitHub Actions
+# Calculate - Experiments with Jenkins Artifactory Plugin
 A tiny repo for running small experiments in CI/CD
 
 - Contains a tiny maven project
