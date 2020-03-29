@@ -4,11 +4,15 @@ pipeline {
         maven 'Maven 3.3.9' 
         jdk 'jdk8'  
     }   
-	
+
+    environment {
+        SETTINGS_SECRET_FILE = credentials('settings-secret-file')
+    }
+
     stages {
 		stage('Unit Tests') {
             steps{
-                sh 'mvn -f maths/pom.xml clean test -s ${settings.xml}'
+                sh 'mvn -f maths/pom.xml clean test -s ${SETTINGS_SECRET_FILE}'
             }
         }
 		
