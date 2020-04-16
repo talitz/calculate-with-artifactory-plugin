@@ -3,7 +3,7 @@ node {
         checkout scm
     }
     
-    stage('Build & Deploy') {
+    stage('Build, Deploy & Promote') {
         configFileProvider([configFile(fileId: 'd5b75962-6056-4d40-a724-5b90e45f7cbc', variable: 'SETTINGS_SECRET_FILE')]) {
             def rtMaven = Artifactory.newMavenBuild()
             def buildNumber = env.BUILD_NUMBER
@@ -21,7 +21,7 @@ node {
                 'buildName'  : buildInfo.name,
                 'buildNumber': buildInfo.number,
                 'targetRepo' : 'libs-release-local',
-                'comment'    : 'This is a stable java-project version',
+                'comment'    : 'This is a promotion from staging to release',
                 'status'     : 'Released',
                 'sourceRepo' : 'libs-staging-local',
                 'copy'       : true,
