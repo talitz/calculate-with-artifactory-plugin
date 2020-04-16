@@ -1,35 +1,36 @@
 node {
-    stage 'Checkout'
+    stage('Checkout'){
         checkout scm
-    
-    stage 'Build & Deploy'
-    
-    configFileProvider([configFile(fileId: 'settings-secret-file', variable: 'SETTINGS_SECRET_FILE')]) {
-        def rtMaven = Artifactory.newMavenBuild()
-        def buildNumber = env.BUILD_NUMBER
-        def jobName = env.JOB_NAME
-        def server = Artifactory.server "talyi-artifactory"
-        rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
-        rtMaven.tool = 'Maven 3.3.9'
-        String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
     }
+    
+    stage('Build & Deploy') {
+        configFileProvider([configFile(fileId: 'settings-secret-file', variable: 'SETTINGS_SECRET_FILE')]) {
+            def rtMaven = Artifactory.newMavenBuild()
+            def buildNumber = env.BUILD_NUMBER
+            def jobName = env.JOB_NAME
+            def server = Artifactory.server "talyi-artifactory"
+            rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
+            rtMaven.tool = 'Maven 3.3.9'
+            String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
+        }
 
-    def buildInfo = Artifactory.newBuildInfo()
-    buildInfo.name = "maven-${jobName}"
-    buildInfo.env.collect()
-    rtMaven.run pom: 'pom.xml', goals: mvnGoals, buildInfo: buildInfo
+        def buildInfo = Artifactory.newBuildInfo()
+        buildInfo.name = "maven-${jobName}"
+        buildInfo.env.collect()
+        rtMaven.run pom: 'pom.xml', goals: mvnGoals, buildInfo: buildInfo
 
-    server.publishBuildInfo buildInfo
+        server.publishBuildInfo buildInfo
 
-    def promotionConfig = [
-	    'buildName'  : buildInfo.name,
-	    'buildNumber': buildInfo.number,
-	    'targetRepo' : 'libs-release-local',
-	    'comment'    : 'This is a stable java-project version',
-	    'status'     : 'Released',
-	    'sourceRepo' : 'libs-staging-local',
-	    'copy'       : true,
-	    'failFast'   : true
-    ]
-   server.promote promotionConfig		
+        def promotionConfig = [
+            'buildName'  : buildInfo.name,
+            'buildNumber': buildInfo.number,
+            'targetRepo' : 'libs-release-local',
+            'comment'    : 'This is a stable java-project version',
+            'status'     : 'Released',
+            'sourceRepo' : 'libs-staging-local',
+            'copy'       : true,
+            'failFast'   : true
+        ]
+       server.promote promotionConfig       
+    }
 }
