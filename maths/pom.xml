@@ -13,7 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.distribution.url>http://35.184.121.71:8082/artifactory/libs-release</project.distribution.url>
+    <project.distribution.url>http://35.184.121.71:8082/artifactory</project.distribution.url>
   </properties>
   
   <distributionManagement>
