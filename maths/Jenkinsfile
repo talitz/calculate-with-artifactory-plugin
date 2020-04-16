@@ -7,48 +7,43 @@ pipeline {
 
     environment {
         SETTINGS_SECRET_FILE = credentials('settings-secret-file')
+        buildNumber = env.BUILD_NUMBER
+	jobName = env.JOB_NAME
+        mavenBuildName = "maven-${jobName}"
+        server = Artifactory.server "local-artifactory"
+        rtFullUrl = server.url
+	rtIpAddress = rtFullUrl - ~/^http?.:\/\// - ~/\/artifactory$/
+        pipelineUtils = load 'pipelineUtils.groovy'
     }
 
-    stages {
-	stage('Unit Tests') {
-            steps{
-                sh 'mvn -f maths/pom.xml clean test -s ${SETTINGS_SECRET_FILE}'
-            }
-        }
-
-        stage ('Build & Upload Artifact') {
-            steps {
-                rtMavenRun (
-                    tool: "Maven 3.3.9", 
-                    pom: 'maths/pom.xml',
-                    goals: 'clean install -Dmaven.test.skip=true -s ${SETTINGS_SECRET_FILE}',
-                    deployerId: "MAVEN_DEPLOYER",
-                    resolverId: "MAVEN_RESOLVER"
-                )
-            }
-        }
-
-        stage ('Publish build info') {
-            steps {
-                rtPublishBuildInfo (
-                    serverId: talyi-artifactory
-                )
-            }
+    stages {    
+        stage("checkout") {
+            checkout scm
         }
 	    
-        stage ('Promotion') {
-	    steps {
-		rtPromote (
-		    serverId: talyi-artifactory,
-		    targetRepo: 'libs-release-local',
-		    comment: 'Releasing this piece of software!',
-		    sourceRepo: 'libs-staging-local',
-		    status: 'Released',
-		    includeDependencies: true,
-		    failFast: true,
-		    copy: true
-		)
-	    }
-	}	    
+        stage("Build & Deploy") {
+            def rtMaven = Artifactory.newMavenBuild()
+            rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
+            rtMaven.tool = 'Maven 3.3.9'
+            String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
+            def buildInfo = Artifactory.newBuildInfo()
+            buildInfo.name = mavenBuildName
+            buildInfo.env.collect()
+            rtMaven.run pom: 'pom.xml', goals: mvnGoals, buildInfo: buildInfo
+		
+            server.publishBuildInfo buildInfo
+		
+	    def promotionConfig = [
+		    'buildName'  : buildInfo.name,
+		    'buildNumber': buildInfo.number,
+		    'targetRepo' : 'libs-release-local',
+		    'comment'    : 'This is a stable java-project version',
+		    'status'     : 'Released',
+		    'sourceRepo' : 'libs-staging-local',
+		    'copy'       : true,
+		    'failFast'   : true
+	    ]
+	    server.promote promotionConfig		
+        }	     	    
     }
 }
