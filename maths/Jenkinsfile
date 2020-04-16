@@ -14,7 +14,7 @@ node {
             def buildInfo = Artifactory.newBuildInfo()  
             buildInfo.name = "maven-${env.JOB_NAME}"
             buildInfo.env.collect()
-            rtMaven.run pom: 'pom.xml', goals: mvnGoals, buildInfo: buildInfo
+            rtMaven.run pom: 'maths/pom.xml', goals: mvnGoals, buildInfo: buildInfo
             server.publishBuildInfo buildInfo
 
             def promotionConfig = [
