@@ -1,20 +1,19 @@
 node {
-    environment {
-        SETTINGS_SECRET_FILE = credentials('settings-secret-file')
-    }
-  
     stage 'Checkout'
         checkout scm
     
-	    
     stage 'Build & Deploy'
-    def rtMaven = Artifactory.newMavenBuild()
-    def buildNumber = env.BUILD_NUMBER
-    def jobName = env.JOB_NAME
-    def server = Artifactory.server "talyi-artifactory"
-    rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
-    rtMaven.tool = 'Maven 3.3.9'
-    String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${settings-secret-file}"
+    
+    configFileProvider([configFile(fileId: 'settings-secret-file', variable: 'SETTINGS_SECRET_FILE')]) {
+        def rtMaven = Artifactory.newMavenBuild()
+        def buildNumber = env.BUILD_NUMBER
+        def jobName = env.JOB_NAME
+        def server = Artifactory.server "talyi-artifactory"
+        rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
+        rtMaven.tool = 'Maven 3.3.9'
+        String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
+    }
+
     def buildInfo = Artifactory.newBuildInfo()
     buildInfo.name = "maven-${jobName}"
     buildInfo.env.collect()
