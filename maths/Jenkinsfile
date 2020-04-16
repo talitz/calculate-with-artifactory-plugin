@@ -55,9 +55,28 @@ pipeline {
         stage ('Publish build info') {
             steps {
                 rtPublishBuildInfo (
-                    serverId: "ARTIFACTORY_SERVER"
+                    serverId: ARTIFACTORY_SERVER
                 )
             }
         }
+	    
+	    
+     stage ('Promotion') {
+            steps {
+                rtPromote (
+                    //Mandatory parameter
+                    serverId: ARTIFACTORY_SERVER,
+                    targetRepo: 'libs-release-local',
+                    comment: 'Releasing this piece of software!',
+                    sourceRepo: 'libs-staging-local',
+                    status: 'Released',
+                    includeDependencies: true,
+                    failFast: true,
+                    copy: true
+                )
+            }
+        }
+	    
+	    
     }
 }
