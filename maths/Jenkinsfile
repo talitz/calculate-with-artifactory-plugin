@@ -10,33 +10,9 @@ pipeline {
     }
 
     stages {
-		stage('Unit Tests') {
+	stage('Unit Tests') {
             steps{
                 sh 'mvn -f maths/pom.xml clean test -s ${SETTINGS_SECRET_FILE}'
-            }
-        }
-		
-        stage ('Artifactory configuration') {
-            steps {
-                rtServer (
-                    id: "ARTIFACTORY_SERVER",
-                    url: "http://35.184.121.71:8082/artifactory",
-		    credentialsId: 'admin.jfrog'
-                )
-
-                rtMavenDeployer (
-                    id: "MAVEN_DEPLOYER",
-                    serverId: "ARTIFACTORY_SERVER",
-                    releaseRepo: "libs-release-local",
-                    snapshotRepo: "libs-snapshot-local"
-                )
-
-                rtMavenResolver (
-                    id: "MAVEN_RESOLVER",
-                    serverId: "ARTIFACTORY_SERVER",
-                    releaseRepo: "libs-release",
-                    snapshotRepo: "libs-snapshot"
-                )
             }
         }
 
@@ -55,28 +31,24 @@ pipeline {
         stage ('Publish build info') {
             steps {
                 rtPublishBuildInfo (
-                    serverId: ARTIFACTORY_SERVER
+                    serverId: talyi-artifactory
                 )
             }
         }
 	    
-	    
-     stage ('Promotion') {
-            steps {
-                rtPromote (
-                    //Mandatory parameter
-                    serverId: ARTIFACTORY_SERVER,
-                    targetRepo: 'libs-release-local',
-                    comment: 'Releasing this piece of software!',
-                    sourceRepo: 'libs-staging-local',
-                    status: 'Released',
-                    includeDependencies: true,
-                    failFast: true,
-                    copy: true
-                )
-            }
-        }
-	    
-	    
+        stage ('Promotion') {
+	    steps {
+		rtPromote (
+		    serverId: talyi-artifactory,
+		    targetRepo: 'libs-release-local',
+		    comment: 'Releasing this piece of software!',
+		    sourceRepo: 'libs-staging-local',
+		    status: 'Released',
+		    includeDependencies: true,
+		    failFast: true,
+		    copy: true
+		)
+	    }
+	}	    
     }
 }
