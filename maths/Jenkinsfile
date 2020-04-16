@@ -4,7 +4,7 @@ node {
     }
     
     stage('Build & Deploy') {
-        configFileProvider([configFile(fileId: 'settings-secret-file', variable: 'SETTINGS_SECRET_FILE')]) {
+        configFileProvider([configFile(fileId: 'd5b75962-6056-4d40-a724-5b90e45f7cbc', variable: 'SETTINGS_SECRET_FILE')]) {
             def rtMaven = Artifactory.newMavenBuild()
             def buildNumber = env.BUILD_NUMBER
             def jobName = env.JOB_NAME
