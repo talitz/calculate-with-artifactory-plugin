@@ -4,7 +4,6 @@ node {
     }
     
     stage('Build & Deploy') {
-
         configFileProvider([configFile(fileId: 'd5b75962-6056-4d40-a724-5b90e45f7cbc', variable: 'SETTINGS_SECRET_FILE')]) {
             def rtMaven = Artifactory.newMavenBuild()
             def buildNumber = env.BUILD_NUMBER
@@ -12,25 +11,23 @@ node {
             rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
             rtMaven.tool = 'Maven 3.3.9'
             String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
-        }
+            def buildInfo = Artifactory.newBuildInfo()  
+            buildInfo.name = "maven-${env.JOB_NAME}"
+            buildInfo.env.collect()
+            rtMaven.run pom: 'pom.xml', goals: mvnGoals, buildInfo: buildInfo
+            server.publishBuildInfo buildInfo
 
-        def buildInfo = Artifactory.newBuildInfo()
-        buildInfo.name = "maven-${env.JOB_NAME}"
-        buildInfo.env.collect()
-        rtMaven.run pom: 'pom.xml', goals: mvnGoals, buildInfo: buildInfo
-
-        server.publishBuildInfo buildInfo
-
-        def promotionConfig = [
-            'buildName'  : buildInfo.name,
-            'buildNumber': buildInfo.number,
-            'targetRepo' : 'libs-release-local',
-            'comment'    : 'This is a stable java-project version',
-            'status'     : 'Released',
-            'sourceRepo' : 'libs-staging-local',
-            'copy'       : true,
-            'failFast'   : true
-        ]
-       server.promote promotionConfig       
+            def promotionConfig = [
+                'buildName'  : buildInfo.name,
+                'buildNumber': buildInfo.number,
+                'targetRepo' : 'libs-release-local',
+                'comment'    : 'This is a stable java-project version',
+                'status'     : 'Released',
+                'sourceRepo' : 'libs-staging-local',
+                'copy'       : true,
+                'failFast'   : true
+            ]
+           server.promote promotionConfig     
+        }  
     }
 }
