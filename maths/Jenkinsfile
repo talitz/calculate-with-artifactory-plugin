@@ -3,7 +3,7 @@ node {
         SETTINGS_SECRET_FILE = credentials('settings-secret-file')
     }
   
-    stage 'checkout'
+    stage 'Checkout'
         checkout scm
     
 	    
@@ -11,7 +11,7 @@ node {
     def rtMaven = Artifactory.newMavenBuild()
     def buildNumber = env.BUILD_NUMBER
     def jobName = env.JOB_NAME
-    def server = Artifactory.server "local-artifactory"
+    def server = Artifactory.server "talyi-artifactory"
     rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
     rtMaven.tool = 'Maven 3.3.9'
     String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
