@@ -23,6 +23,15 @@ node {
         server.publishBuildInfo buildInfo  
     }
     
+    stage ('Xray scan') {
+        steps {
+            xrayScan (
+                serverId: "talyi-artifactory",
+                failBuild: false
+            )
+        }
+    }
+    
     stage('Promote') {
             def promotionConfig = [
                 'buildName'  : buildInfo.name,
