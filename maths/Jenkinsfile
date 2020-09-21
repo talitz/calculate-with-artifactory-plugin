@@ -2,15 +2,17 @@ node {
     stage('Checkout'){
         checkout scm
     }
-    
+    def rtMaven, buildNumber, server
+
     stage('Build, Deploy & Promote') {
         configFileProvider([configFile(fileId: 'd5b75962-6056-4d40-a724-5b90e45f7cbc', variable: 'SETTINGS_SECRET_FILE')]) {
-            def rtMaven = Artifactory.newMavenBuild()
-            def buildNumber = env.BUILD_NUMBER
-            def server = Artifactory.server "talyi-artifactory"
+            rtMaven = Artifactory.newMavenBuild()
+            buildNumber = env.BUILD_NUMBER
+            server = Artifactory.server "talyi-artifactory"
             rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
             rtMaven.tool = 'Maven 3.3.9'
             String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
+            
             def buildInfo = Artifactory.newBuildInfo()  
             buildInfo.name = "maven-${env.JOB_NAME}"
             buildInfo.env.collect()
