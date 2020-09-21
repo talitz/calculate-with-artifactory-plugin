@@ -23,13 +23,14 @@ node {
         server.publishBuildInfo buildInfo  
     }
     
-    stage ('Xray scan') {
-        steps {
-            xrayScan (
-                serverId: "talyi-artifactory",
-                failBuild: false
-            )
-        }
+   stage ('Xray scan') {
+        def scanConfig = [
+                'buildName'      : buildInfo.name,
+                'buildNumber'    : buildInfo.number,
+                'failBuild'      : true
+        ]
+        def scanResult = server.xrayScan scanConfig
+        echo scanResult as String
     }
     
     stage('Promote') {
