@@ -4,7 +4,7 @@ node {
     }
     def rtMaven, buildNumber, server, buildInfo
 
-    stage('Build, Deploy & Promote') {
+    stage('Build & Deploy') {
         configFileProvider([configFile(fileId: 'd5b75962-6056-4d40-a724-5b90e45f7cbc', variable: 'SETTINGS_SECRET_FILE')]) {
             rtMaven = Artifactory.newMavenBuild()
             buildNumber = env.BUILD_NUMBER
@@ -12,13 +12,15 @@ node {
             rtMaven.deployer server: server, releaseRepo: 'libs-staging-local', snapshotRepo: 'libs-snapshot-local'
             rtMaven.tool = 'Maven 3.3.9'
             String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
-            
-            buildInfo = Artifactory.newBuildInfo()  
-            buildInfo.name = "maven-${env.JOB_NAME}"
-            buildInfo.env.collect()
             rtMaven.run pom: 'maths/pom.xml', goals: mvnGoals, buildInfo: buildInfo
-            server.publishBuildInfo buildInfo   
         }  
+    }
+    
+    stage('Publish Build Info') {
+        buildInfo = Artifactory.newBuildInfo()  
+        buildInfo.name = "maven-${env.JOB_NAME}"
+        buildInfo.env.collect()
+        server.publishBuildInfo buildInfo  
     }
     
     stage('Promote') {
