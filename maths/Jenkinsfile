@@ -2,7 +2,7 @@ node {
     stage('Checkout'){
         checkout scm
     }
-    def rtMaven, buildNumber, server
+    def rtMaven, buildNumber, server, buildInfo
 
     stage('Build, Deploy & Promote') {
         configFileProvider([configFile(fileId: 'd5b75962-6056-4d40-a724-5b90e45f7cbc', variable: 'SETTINGS_SECRET_FILE')]) {
@@ -13,12 +13,15 @@ node {
             rtMaven.tool = 'Maven 3.3.9'
             String mvnGoals = "-B clean install -Dmaven.test.skip=true -DartifactVersion=${buildNumber} -s ${SETTINGS_SECRET_FILE}"
             
-            def buildInfo = Artifactory.newBuildInfo()  
+            buildInfo = Artifactory.newBuildInfo()  
             buildInfo.name = "maven-${env.JOB_NAME}"
             buildInfo.env.collect()
             rtMaven.run pom: 'maths/pom.xml', goals: mvnGoals, buildInfo: buildInfo
-            server.publishBuildInfo buildInfo
-
+            server.publishBuildInfo buildInfo   
+        }  
+    }
+    
+    stage('Promote') {
             def promotionConfig = [
                 'buildName'  : buildInfo.name,
                 'buildNumber': buildInfo.number,
@@ -29,7 +32,6 @@ node {
                 'copy'       : true,
                 'failFast'   : true
             ]
-           server.promote promotionConfig     
-        }  
+           server.promote promotionConfig          
     }
 }
